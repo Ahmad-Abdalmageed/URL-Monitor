@@ -1,13 +1,4 @@
 // Async Function Wrapper
-
-const tryCatchWrap = async (message, callback) => {
-    try {
-        return await callback();
-    } catch (e) {
-        throw new Error(`${message} -:> ${e}`);
-    }
-};
-
 const tryCatchWrapExpress = (callback) => {
     return async (req, res, next) => {
         try {
@@ -21,6 +12,5 @@ const tryCatchWrapExpress = (callback) => {
 };
 
 module.exports = {
-    tryCatchWrap,
     tryCatchWrapExpress
 };
