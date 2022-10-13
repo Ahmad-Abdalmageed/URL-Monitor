@@ -3,8 +3,9 @@ const { User, validate } = require("../Models/users");
 const Token = require("../Models/tokens");
 const crypto = require("crypto");
 const { apiError } = require("../Utils/apiError");
-const { bcrypt_pass, bcrypt_salt } = require("../Config/config.secrets");
+const { bcrypt_pass, bcrypt_salt, jwt_password } = require("../Config/config.secrets");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 // const sendEmail = require("../Utils/mail");
 
 
@@ -38,5 +39,23 @@ const createUser = tryCatchWrapExpress(async (req, res) => {
     });
 });
 
+const authenticateUser = tryCatchWrapExpress(async (req, res) => {
+    const isNotValid = validate(req.body, true);
+    if (isNotValid) throw new apiError(400, isNotValid.details[0].message);
 
-module.exports = { createUser };
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) return res.status(400).json({ message: "User not found " });
+
+    const authenticated = bcrypt.compareSync(
+        req.body.password + bcrypt_pass, user.password
+    );
+    if (!authenticated) return res.status(400).json({ message: "wrong password" });
+
+    const generatedToken = jwt.sign({ user }, jwt_password);
+    res.status(200).json({
+        message: "User Authentication Successful",
+        token: generatedToken
+    });
+});
+
+module.exports = { createUser, authenticateUser };
