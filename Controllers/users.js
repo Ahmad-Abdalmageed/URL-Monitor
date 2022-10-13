@@ -6,7 +6,7 @@ const { apiError } = require("../Utils/apiError");
 const { bcrypt_pass, bcrypt_salt, jwt_password } = require("../Config/config.secrets");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-// const sendEmail = require("../Utils/mail");
+const sendEmail = require("../Utils/mail");
 
 
 const createUser = tryCatchWrapExpress(async (req, res) => {
@@ -30,7 +30,7 @@ const createUser = tryCatchWrapExpress(async (req, res) => {
     }).save();
 
     const verificationURL = `${process.env.base_url}/users/verify/${user._id}/${token.token}`;
-    // await sendEmail(user.email, "Verify Email", verificationURL);
+    await sendEmail(user.email, "Verify Email", verificationURL);
 
     res.status(200).json({
         message: "Verification Sent",

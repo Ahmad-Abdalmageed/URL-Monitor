@@ -10,11 +10,14 @@ const sendEmail = async (email, subject, content) => {
                 pass: process.env.email_pass
             }
         });
+        // Development
         await transport.sendMail({
             from: process.env.email_user,
             to: email,
             subject: subject,
             text: content
+        }).then(info => {
+            console.log("Preview URL: " + nodemailer.getTestMessageUrl(info));
         });
     } catch (error) {
         console.log("Email Not Sent", error);
