@@ -2,8 +2,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./Config/config.db");
-
-const PORT = process.env.PORT || 8000;
+const usersRouter = require("./Routes/users");
+const errorHandler = require("./Middlewares/errorHandler");
+const PORT = process.env.port || 8000;
 const app = express();
 
 
@@ -11,7 +12,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use("/api/v1/users", usersRouter);
 
+
+app.use(errorHandler);
 // Server
 app.get("/", (req, res) => {
     res.json({ message: "Hello Bosta" });
