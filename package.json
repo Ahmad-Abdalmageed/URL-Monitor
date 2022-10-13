@@ -1,7 +1,6 @@
 {
   "name": "url-monitor",
   "version": "1.0.0",
-  "type": "commonjs",
   "description": "Bosta's Backend assessment.",
   "main": "index.js",
   "scripts": {
