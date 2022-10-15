@@ -1,24 +1,37 @@
 const { tryCatchWrapExpress } = require("../Utils/wrappers");
 const Token = require("../Models/tokens");
-const { User } = require("../Models/users");
+const { apiError } = require("../Utils/apiError");
+const crypto = require("crypto");
+const userController = require("../Controllers/users");
 
-const verifyUser = tryCatchWrapExpress(async (req, res) => {
-    const foundUser = await User.findById(req.params.id);
 
-    if (!foundUser)
-        return res.status(400).json({ message: "Invalid/Expired Link" });
+const createToken = async (userID) => {
+    // Check User Exits
+    if (!await userController.userExists(userID))
+        throw new apiError(400, "User Does not Exist");
 
-    const token = await Token.findOne({
-        userID: foundUser._id,
-        token: req.params.token
+    return await new Token({
+        userID,
+        token: crypto.randomBytes(32).toString("hex")
+    }).save();
+};
+
+const verifyUser = async (userID, createdToken) => {
+    if (!await userController.userExists(userID))
+        throw new apiError(400, "User Does not Exist");
+
+    const tokenExists = await Token.findOne({
+        userID: userID,
+        token: createdToken
     });
 
-    if (!token) return res.status(400).json({ message: "Invalid/Expired Link" });
+    if (!tokenExists)
+        throw new apiError(400, "Invalid/Expired Link");
 
-    await User.findByIdAndUpdate({ _id: foundUser._id }, { verified: true });
-    await Token.findByIdAndRemove(token._id);
+    await userController.verifyUser(userID);
+    await Token.findByIdAndRemove(tokenExists._id);
 
-    res.status(200).json({ message: "Verified Successfully " });
-});
+    return { message: "Verified Successfully " };
+};
 
-module.exports = { verifyUser };
+module.exports = { verifyUser, createToken };
