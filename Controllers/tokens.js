@@ -1,4 +1,3 @@
-const { tryCatchWrapExpress } = require("../Utils/wrappers");
 const Token = require("../Models/tokens");
 const { apiError } = require("../Utils/apiError");
 const crypto = require("crypto");
