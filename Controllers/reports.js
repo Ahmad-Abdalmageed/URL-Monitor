@@ -1,6 +1,5 @@
 const { apiError } = require("../Utils/apiError");
 const { Report, validateReport } = require("../Models/report");
-const { Check } = require("../Models/urlCheck");
 
 function validReportParameters(report) {
     const isNotValid = validateReport(report);
@@ -66,7 +65,8 @@ const deleteReport = async (checkID, userID) => {
     const exists = await Report.exists({ urlID: checkID, userID });
     if (!exists)
         throw new apiError(400, "Check Not Found");
-    await Check.findByIdAndDelete(exists);
+
+    await Report.findByIdAndDelete(exists);
     return { message: "Check Deleted" };
 };
 
