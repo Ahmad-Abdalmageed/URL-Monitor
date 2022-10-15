@@ -9,6 +9,8 @@ function validateCheck(check, update = false) {
     let schema = joi.object({
         name: joi.string().required().min(5).max(100),
         url: joi.string().required(),
+        path: joi.string().optional(),
+        port: joi.number().optional().min(0).max(65536),
         webhook: joi.string().optional(),
         timeout: joi.number().optional().max(3 * timeoutTime),
         interval: joi.number().optional().max(3 * intervalTime),
@@ -18,6 +20,8 @@ function validateCheck(check, update = false) {
         schema = joi.object({
             name: joi.string().min(5).max(100),
             url: joi.string(),
+            path: joi.string(),
+            port: joi.number().min(0).max(65536),
             webhook: joi.string(),
             timeout: joi.number().max(3 * timeoutTime),
             interval: joi.number().max(3 * intervalTime),
@@ -38,10 +42,23 @@ const urlCheckSchema = new mongoose.Schema({
         type: String,
         required: [true, "Check needs URL"]
     },
+    path: {
+        type: String,
+        default: null
+    },
     userID: {
         type: "objectId",
         ref: "users",
         required: [true, "Missing User ID"]
+    },
+    protocol: {
+        type: String,
+        enum: ["https:", "http:", "tcp:"],
+        required: true
+    },
+    port: {
+        type: Number,
+        default: null
     },
     webhook: {
         type: String,
@@ -58,6 +75,10 @@ const urlCheckSchema = new mongoose.Schema({
     threshold: {
         type: Number,
         default: threshold
+    },
+    handle: {
+        type: Number,
+        default: null
     }
 });
 
