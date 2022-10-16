@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const joi = require("joi");
 
-const intervalTime = 10 * 60 * 60 * 1000;
+const intervalTime = 1000 * 60;
 const timeoutTime = 5000;
 const threshold = 1;
 
@@ -25,7 +25,9 @@ function validateCheck(check, update = false) {
             webhook: joi.string(),
             timeout: joi.number().max(3 * timeoutTime),
             interval: joi.number().max(3 * intervalTime),
-            threshold: joi.number()
+            threshold: joi.number(),
+            active: joi.bool(),
+            handle: joi.object()
         }).optional();
     }
     const { error } = schema.validate(check);
@@ -76,8 +78,12 @@ const urlCheckSchema = new mongoose.Schema({
         type: Number,
         default: threshold
     },
+    active: {
+        type: Boolean,
+        default: false
+    },
     handle: {
-        type: Number,
+        type: Object,
         default: null
     }
 });
