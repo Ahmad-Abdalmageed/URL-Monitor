@@ -2,7 +2,7 @@ const { apiError } = require("../Utils/apiError");
 const { Check, validateCheck } = require("../Models/urlCheck");
 const reportController = require("../Controllers/reports");
 const { userExists } = require("../Controllers/users");
-// const { startPoll } = require("./polling");
+const eventEmitter = require("./events");
 
 
 const isValidUrl = (urlString) => {
@@ -21,7 +21,7 @@ function validCheckParameters(check, update = false) {
 }
 
 async function getCheckByID(checkID) {
-    return Check.findById(checkID);
+    return Check.findById(checkID).exec();
 }
 
 const createCheck = async (check, userID) => {
@@ -34,25 +34,27 @@ const createCheck = async (check, userID) => {
     validCheckParameters(check);
     const urlObj = new URL(check.url);
     const newCheck = {
+        ...check,
         url: urlObj.hostname,
         path: urlObj.pathname ? urlObj.pathname : null,
         userID,
         protocol: urlObj.protocol,
-        port: urlObj.port,
-        ...check
+        port: urlObj.port
     };
     if (newCheck.webhook && !isValidUrl(newCheck.webhook))
         throw new apiError(400, "Not a Valid URL");
 
     // Check Duplicate URL
-    const foundCheckDuplicate = await Check.findOne({ name: check.name, url: check.url, userID });
+    const foundCheckDuplicate = await Check.findOne({ name: newCheck.name, url: newCheck.url, userID });
     if (foundCheckDuplicate) throw new apiError(400, "Duplicate Check");
 
-    const { _id } = await new Check(newCheck).save();
-    // Create Accompanied Report
-    await reportController.createReport({}, _id, userID);
+    const checkCreated = await new Check(newCheck).save();
 
-    return { message: "Check Created", checkID: _id };
+    // Create Accompanied Report
+    await reportController.createReport({}, checkCreated._id, userID);
+
+    eventEmitter.emit("Check Created", checkCreated);
+    return { message: "Check Created", checkID: checkCreated._id };
 };
 
 const getChecks = async (userID) => {
@@ -67,7 +69,10 @@ const getChecks = async (userID) => {
     return { message: "Checks Found", userChecks };
 };
 
-// TODO : Remove
+const getAllChecks = async () => {
+    return Check.find({});
+};
+
 const getCheckByName = async (userID, checkName) => {
     if (!userID) throw new apiError(400, "User Missing");
     if (!checkName) throw new apiError(400, "Check Name Missing");
@@ -92,24 +97,32 @@ const updateCheck = async (userID, checkID, newCheck) => {
     //Check user Existence
     if (!await userExists(userID))
         throw new apiError(400, "User Does Not Exist");
-
     validCheckParameters(newCheck, true);
-
-    const urlObj = new URL(newCheck.url);
-    const newCheckUpdated = {
-        url: urlObj.hostname,
-        path: urlObj.pathname ? urlObj.pathname : null,
-        userID,
-        protocol: urlObj.protocol,
-        port: urlObj.port,
+    let newCheckUpdated = {
         ...newCheck
     };
+    if (newCheck.url) {
+
+        const urlObj = new URL(newCheck.url);
+        newCheckUpdated = {
+            url: urlObj.hostname,
+            path: urlObj.pathname ? urlObj.pathname : null,
+            protocol: urlObj.protocol,
+            port: urlObj.port
+        };
+    }
+
     const exists = await Check.exists({ _id: checkID, userID });
 
     if (!exists)
         throw new apiError(400, "Check Not Found");
 
-    await Check.findByIdAndUpdate(exists, newCheckUpdated);
+    // Clear History
+    await reportController.updateReport({ history: []}, checkID, userID );
+
+    Check.findByIdAndUpdate(exists, newCheckUpdated).then((newCheck) => {
+        eventEmitter.emit("Check Update", newCheck);
+    });
     return { message: "Check Updated" };
 };
 
@@ -136,6 +149,7 @@ const deleteCheck = async (userID, checkID) => {
 
 
 module.exports = {
+    getAllChecks,
     getCheckByID,
     createCheck,
     getChecks,
