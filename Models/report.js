@@ -9,11 +9,7 @@ function validateReport(report) {
         downtime: joi.number().min(0),
         uptime: joi.number().min(0),
         responseTime: joi.number().min(0),
-        history: joi.object({
-            timestamp: joi.date(),
-            status: joi.string().valid("available", "unavailable", "error", "-"),
-            availability: joi.number().min(0)
-        }).optional()
+        history: joi.array().optional()
     });
     const { error } = schema.validate(report);
     return error;
