@@ -2,6 +2,7 @@ require("dotenv").config();
 const usersRouter = require("./Routes/users");
 const urlChecksRouter = require("./Routes/urlChecks");
 const reportsRouter = require("./Routes/reports");
+const eventEmitter = require("./Controllers/events");
 
 const express = require("express");
 const cors = require("cors");
@@ -32,3 +33,5 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server Started on ${PORT}...`);
 });
+
+eventEmitter.emit("Server Start");
