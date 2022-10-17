@@ -34,6 +34,10 @@ base_url=http://localhost:8000/api/v1
 node_env=dev
 ```
 
+To start Local Server hit `npm run start` in terminal, also provided a `Nodemon`watcher for development using `npm run watch`.
+
+
+
 ## Authentication
 
 User Authentication start with a Request for `{base_url}/users/signup` with the following description. Email, Username and Password is sent in the body of the request.
