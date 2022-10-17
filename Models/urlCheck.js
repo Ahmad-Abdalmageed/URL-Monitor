@@ -14,7 +14,14 @@ function validateCheck(check, update = false) {
         webhook: joi.string().optional(),
         timeout: joi.number().optional().max(3 * timeoutTime),
         interval: joi.number().optional().max(3 * intervalTime),
-        threshold: joi.number().optional()
+        threshold: joi.number().optional(),
+        authentication: joi.object({
+            username: joi.string(),
+            password: joi.string()
+        }).optional(),
+        httpHeaders: joi.object().optional(),
+        tags: joi.array().optional(),
+        ignoreSSL: joi.bool().optional()
     });
     if (update) {
         schema = joi.object({
@@ -27,7 +34,15 @@ function validateCheck(check, update = false) {
             interval: joi.number().max(3 * intervalTime),
             threshold: joi.number(),
             active: joi.bool(),
-            handle: joi.object()
+            headers: joi.object().optional(),
+            handle: joi.object(),
+            authentication: joi.object({
+                username: joi.string(),
+                password: joi.string()
+            }),
+            httpHeaders: joi.object(),
+            tags: joi.array(),
+            ignoreSSL: joi.bool()
         }).optional();
     }
     const { error } = schema.validate(check);
@@ -66,9 +81,28 @@ const urlCheckSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    authentication: {
+        type: {
+            username: String,
+            password: String
+        },
+        default: null
+    },
+    httpHeaders: {
+        type: Object,
+        default: {}
+    },
+    tags: {
+        type: [String],
+        default: []
+    },
     timeout: {
         type: Number,
         default: timeoutTime
+    },
+    ignoreSSL: {
+        type: Boolean,
+        default: true
     },
     interval: {
         type: Number,

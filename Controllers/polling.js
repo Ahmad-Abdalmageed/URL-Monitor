@@ -3,6 +3,7 @@ const userController = require("./users");
 const reportController = require("./reports");
 const { Check } = require("../Models/urlCheck");
 const axios = require("axios");
+const https = require("https");
 
 const axiosInstance = axios.create();
 
@@ -78,15 +79,29 @@ async function updateReportOnFail(userID, checkID, fail) {
 
 async function testURL(urlCheck) {
     const options = {
+        headers: { ...urlCheck.httpHeaders },
         method: `get`,
-        timeout: urlCheck.timeout
+        timeout: urlCheck.timeout,
+        ignoreSSL: new https.Agent({
+            rejectUnauthorized: urlCheck.ignoreSSL
+        })
     };
+
     let url = urlCheck.port ?
         `${urlCheck.protocol}//${urlCheck.url}:${urlCheck.port}` :
         `${urlCheck.protocol}//${urlCheck.url}`;
+
     if (urlCheck.path) {
         url += urlCheck.path;
     }
+
+    if (urlCheck.authentication) {
+        options.auth = {
+            username: urlCheck.authentication.username,
+            password: urlCheck.authentication.password
+        };
+    }
+
     console.log("Checking .. ", url);
 
     await axiosInstance.get(url, options).then((resp) => {
