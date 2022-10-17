@@ -26,6 +26,13 @@ const routerGetCheckByName = tryCatchWrapExpress(async (req, res) => {
     return res.status(200).json(response);
 });
 
+const routerGetCheckByTag = tryCatchWrapExpress(async (req, res) => {
+    if (!req.body.tags)
+        return res.status(400).json({ message: "Provide Tags" });
+    const response = await checksController.getCheckByTag(req.userID, req.body.tags);
+    return res.status(200).json(response);
+});
+
 const routerUpdateCheck = tryCatchWrapExpress(async (req, res) => {
     if (req.body.length === 0)
         return res.status(400).json({ message: "Empty Request" });
@@ -49,7 +56,7 @@ urlChecksRouter.route("/:checkName").get(routerGetCheckByName);
 urlChecksRouter.route("/:checkID")
     .patch(routerUpdateCheck)
     .delete(routerDeleteCheck);
-
+urlChecksRouter.route("/find/tag").get(routerGetCheckByTag);
 urlChecksRouter.route("/").post(routerCreateCheck).get(routerGetChecks);
 
 module.exports = urlChecksRouter;

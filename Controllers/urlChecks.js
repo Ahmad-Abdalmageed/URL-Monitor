@@ -87,6 +87,20 @@ const getCheckByName = async (userID, checkName) => {
     return { message: "Found Check", check };
 };
 
+
+const getCheckByTag = async (userID, tags) => {
+    if (!userID) throw new apiError(400, "User Missing");
+    if (!tags) throw new apiError(400, "Missing Tag");
+    //Check user Existence
+    if (!await userExists(userID))
+        throw new apiError(400, "User Does Not Exist");
+
+    const checksGroupedByTag = await Check.find({ userID, tags });
+    if (!checksGroupedByTag)
+        throw new apiError(400, "No Checks found with given tag");
+    return { message: "Check Found with Tag", checksGroupedByTag };
+};
+
 const updateCheck = async (userID, checkID, newCheck) => {
     if (!newCheck || Object.keys(newCheck).length === 0)
         throw new apiError(400, "Empty Update Check");
@@ -118,7 +132,7 @@ const updateCheck = async (userID, checkID, newCheck) => {
         throw new apiError(400, "Check Not Found");
 
     // Clear History
-    await reportController.updateReport({ history: []}, checkID, userID );
+    await reportController.updateReport({ history: [] }, checkID, userID);
 
     Check.findByIdAndUpdate(exists, newCheckUpdated).then((newCheck) => {
         eventEmitter.emit("Check Update", newCheck);
@@ -154,6 +168,7 @@ module.exports = {
     createCheck,
     getChecks,
     getCheckByName,
+    getCheckByTag,
     updateCheck,
     deleteCheck
 };
